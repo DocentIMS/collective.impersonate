@@ -14,6 +14,11 @@ Changelog
   back in without logging out. Logging out, or 12 hours, ends the way back.
   [DocentIMS]
 
+- DocentIMS fork: the "Return to <admin>" bar shows on every page. It is
+  built by a script in the page head, so pages that replace the whole content
+  area, themes that hide a page area, and sites with no theme all show it.
+  [DocentIMS]
+
 - DocentIMS fork: impersonating now needs a POST with a CSRF token.
   [DocentIMS]
 

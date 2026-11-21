@@ -20,9 +20,14 @@
       permission="zope.Public"
       />
 
+  <!-- The "you are impersonating" bar is a script in the page head that
+       builds the bar. The head is the one place every page template and
+       every theme keeps: IBelowContent is lost when a page fills the whole
+       "content" slot, the Docent theme hides IAboveContent, and it drops the
+       header on form pages. -->
   <browser:viewlet
       name="collective.impersonate.impersonating"
-      manager="plone.app.layout.viewlets.interfaces.IBelowContent"
+      manager="plone.app.layout.viewlets.interfaces.IHtmlHead"
       class=".impersonate.ImpersonatingViewlet"
       template="impersonating_viewlet.pt"
       permission="zope.Public"
