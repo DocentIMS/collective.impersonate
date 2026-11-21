@@ -1,15 +1,41 @@
-<div id="impersonating-bar"
-     role="status"
-     style="position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:2000;max-width:90vw;display:flex;gap:.75rem;align-items:center;justify-content:center;flex-wrap:wrap;padding:.4rem 1rem;box-shadow:0 2px 8px rgba(0,0,0,.2);border:1px solid #e0a800;border-radius:.375rem;background:#fff3cd;color:#3d3200;"
-     tal:condition="view/show"
-     i18n:domain="collective.impersonate"
+<script id="impersonating-data"
+        data-return="Return to"
+        data-viewing="You are viewing the site as"
+        tal:condition="view/show"
+        tal:attributes="
+          data-user view/current_name;
+          data-admin view/admin_name;
+          data-url view/return_url;
+        "
+        i18n:attributes="data-viewing; data-return"
+        i18n:domain="collective.impersonate"
 >
-  <span i18n:translate="impersonating_as">You are viewing the site as
-    <strong tal:content="view/current_name"
-            i18n:name="user"
-    >user</strong>.</span>
-  <a class="btn btn-sm btn-warning"
-     href="${view/return_url}"
-  ><tal:label i18n:translate="impersonating_return">Return to</tal:label>
-    <tal:name content="view/admin_name">admin</tal:name></a>
-</div>
+  /* The "you are impersonating" bar. It is built here, from the page head,
+     because that is the one part of a page that every template and every
+     theme keeps: page areas (above/below content, the header) are each
+     dropped by some page or hidden by some theme. */
+  (function () {
+    var data = document.getElementById("impersonating-data").dataset;
+    if (window.top !== window.self) { return; }  /* not inside popups */
+    document.addEventListener("DOMContentLoaded", function () {
+      if (document.getElementById("impersonating-bar")) { return; }
+      var bar = document.createElement("div");
+      bar.id = "impersonating-bar";
+      bar.setAttribute("role", "status");
+      bar.style.cssText = "position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:2000;max-width:90vw;display:flex;gap:.75rem;align-items:center;justify-content:center;flex-wrap:wrap;padding:.4rem 1rem;box-shadow:0 2px 8px rgba(0,0,0,.2);border:1px solid #e0a800;border-radius:.375rem;background:#fff3cd;color:#3d3200;font-size:.9rem;";
+      var text = document.createElement("span");
+      text.appendChild(document.createTextNode(data.viewing + " "));
+      var name = document.createElement("strong");
+      name.textContent = data.user;
+      text.appendChild(name);
+      text.appendChild(document.createTextNode("."));
+      var back = document.createElement("a");
+      back.href = data.url;
+      back.textContent = data.return + " " + data.admin;
+      back.style.cssText = "padding:.15rem .6rem;border:1px solid #b88a00;border-radius:.25rem;background:#ffc107;color:#000;text-decoration:none;font-weight:600;white-space:nowrap;";
+      bar.appendChild(text);
+      bar.appendChild(back);
+      document.body.appendChild(bar);
+    });
+  })();
+</script>
