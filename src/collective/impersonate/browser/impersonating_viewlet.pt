@@ -1,0 +1,15 @@
+<div id="impersonating-bar"
+     role="status"
+     style="position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:2000;max-width:90vw;display:flex;gap:.75rem;align-items:center;justify-content:center;flex-wrap:wrap;padding:.4rem 1rem;box-shadow:0 2px 8px rgba(0,0,0,.2);border:1px solid #e0a800;border-radius:.375rem;background:#fff3cd;color:#3d3200;"
+     tal:condition="view/show"
+     i18n:domain="collective.impersonate"
+>
+  <span i18n:translate="impersonating_as">You are viewing the site as
+    <strong tal:content="view/current_name"
+            i18n:name="user"
+    >user</strong>.</span>
+  <a class="btn btn-sm btn-warning"
+     href="${view/return_url}"
+  ><tal:label i18n:translate="impersonating_return">Return to</tal:label>
+    <tal:name content="view/admin_name">admin</tal:name></a>
+</div>

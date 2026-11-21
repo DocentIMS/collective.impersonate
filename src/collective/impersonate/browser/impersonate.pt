@@ -9,81 +9,165 @@
                tal:define="
                  portal_state context/@@plone_portal_state;
                  navRoot portal_state/portal_url;
+                 errors view/errors | nothing;
+                 many_users view/many_users;
                "
                i18n:domain="collective.impersonate"
   >
+    <style>
+      /* Keep the page (the white box) narrow: it is a short list. */
+      body.template-impersonate #content,
+      body.template-impersonate main > article { max-width: 640px; margin-left: auto; margin-right: auto; }
+      .impersonate-form .impersonate-bar { display: flex; gap: .5rem; align-items: center; margin-bottom: 1rem; }
+      .impersonate-form .impersonate-bar input[type="search"],
+      .impersonate-form .impersonate-bar input[type="text"] { flex: 1 1 auto; min-width: 0; }
+      .impersonate-form table.listing { width: 100%; }
+      .impersonate-form td.impersonate-pick,
+      .impersonate-form th.impersonate-pick { width: 2.5rem; text-align: center; }
+      .impersonate-form tr.impersonate-user { cursor: pointer; }
+      .impersonate-form .impersonate-none { display: none; padding: .75rem 0; }
+    </style>
+
     <h5 i18n:translate="impersonate_warning">This is an admin-only form for impersonating other users. Please use it wisely.</h5>
     <br />
 
-    <form action="${request/getURL}"
+    <form class="impersonate-form"
+          action="${request/getURL}"
           method="post"
-          tal:define="
-            errors view/errors | nothing;
-          "
     >
-      <div tal:define="
+      <input tal:replace="structure context/@@authenticator/authenticator" />
+
+      <div class="field error"
+           tal:define="
              error errors/username | nothing;
-             username request/username | nothing;
            "
-           tal:attributes="
-             class python: error and 'field error' or 'field';
-           "
-      >
-        <label i18n:translate="form_choose_user_label">Enter user ID:</label>
-        <div tal:condition="error"
-             i18n:translate="form_choose_error"
-        >User "<p tal:replace="error"
-             i18n:name="from_choose_user"
-          ></p>" does not exist.</div>
-        <input id="username"
-               name="username"
-               size="30"
-               type="text"
-               tal:attributes="
-                 value username;
-               "
-               i18n:attributes="value"
-        />
-        <input name="impersonate"
-               type="submit"
-               value="Impersonate"
-               i18n:attributes="value"
-        />
-      </div>
-    </form>
+           tal:condition="error"
+           i18n:translate="form_choose_error"
+      >User "<span tal:replace="error"
+              i18n:name="from_choose_user"
+        ></span>" does not exist.</div>
+      <div class="field error"
+           tal:condition="errors/missing | nothing"
+           i18n:translate="form_choose_missing"
+      >Choose a user first.</div>
 
-    <div tal:condition="not: view/many_users">
-      <table class="listing">
-        <caption i18n:translate="">User accounts</caption>
-        <tbody>
-          <tr>
-            <th i18n:translate="list_users">User ID</th>
-            <th i18n:translate="list_users_fullname">Full name</th>
-          </tr>
-          <tr tal:repeat="user view/users">
-            <td tal:content="user/username"></td>
-            <td tal:content="user/fullname"></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <!-- Few users: search box narrows the list, the radio button picks. -->
+      <tal:few condition="not: many_users">
+        <div class="impersonate-bar">
+          <input id="impersonate-search"
+                 aria-label="Search"
+                 autocomplete="off"
+                 autofocus="autofocus"
+                 placeholder="Search"
+                 type="search"
+                 i18n:attributes="placeholder; aria-label"
+          />
+          <input class="btn btn-primary"
+                 name="impersonate"
+                 type="submit"
+                 value="Impersonate"
+                 i18n:attributes="value"
+          />
+        </div>
 
-    <div tal:condition="view/many_users">
-      <br />
-      <p>
-        <span i18n:translate="to_search_for_a_user">To search for a user, use the
-        </span>
-        <a target="_blank"
-           tal:attributes="
-             href python: navRoot + '/@@usergroup-userprefs';
-           "
-           i18n:translate="users_and_groups_control_panel"
+        <table class="listing"
+               id="impersonate-users"
         >
-            Users and Groups control panel
-        </a>
-      </p>
-    </div>
+          <thead>
+            <tr>
+              <th class="impersonate-pick"></th>
+              <th i18n:translate="list_users">User ID</th>
+              <th i18n:translate="list_users_fullname">Full name</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="impersonate-user"
+                tal:repeat="user view/users"
+            >
+              <td class="impersonate-pick">
+                <input name="username"
+                       required="required"
+                       type="radio"
+                       tal:attributes="
+                         value user/username;
+                         aria-label user/username;
+                       "
+                />
+              </td>
+              <td tal:content="user/username"></td>
+              <td tal:content="user/fullname"></td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="impersonate-none"
+           id="impersonate-none"
+           i18n:translate="search_no_match"
+        >No user matches.</p>
 
+        <script>
+          (function () {
+            var box = document.getElementById("impersonate-search");
+            var rows = document.querySelectorAll("#impersonate-users tr.impersonate-user");
+            var none = document.getElementById("impersonate-none");
+            function filter() {
+              var words = box.value.toLowerCase().split(/\s+/).filter(Boolean);
+              var shown = [];
+              rows.forEach(function (row) {
+                var text = row.textContent.toLowerCase();
+                var hit = words.every(function (w) { return text.indexOf(w) !== -1; });
+                row.style.display = hit ? "" : "none";
+                var radio = row.querySelector("input[type=radio]");
+                if (hit) { shown.push(radio); } else { radio.checked = false; }
+              });
+              // One left: pick it, so typing a name and pressing Enter works.
+              if (shown.length === 1 && words.length) { shown[0].checked = true; }
+              none.style.display = shown.length ? "none" : "block";
+            }
+            box.addEventListener("input", filter);
+            rows.forEach(function (row) {
+              row.addEventListener("click", function () {
+                row.querySelector("input[type=radio]").checked = true;
+              });
+            });
+          })();
+        </script>
+      </tal:few>
+
+      <!-- "Many users" sites do not list everybody: type the exact user ID. -->
+      <tal:many condition="many_users">
+        <div class="impersonate-bar">
+          <input id="username"
+                 aria-label="User ID"
+                 name="username"
+                 placeholder="User ID"
+                 required="required"
+                 type="text"
+                 tal:attributes="
+                   value request/username | nothing;
+                 "
+                 i18n:attributes="placeholder; aria-label"
+          />
+          <input class="btn btn-primary"
+                 name="impersonate"
+                 type="submit"
+                 value="Impersonate"
+                 i18n:attributes="value"
+          />
+        </div>
+        <p>
+          <span i18n:translate="to_search_for_a_user">To search for a user, use the
+          </span>
+          <a target="_blank"
+             tal:attributes="
+               href python: navRoot + '/@@usergroup-userprefs';
+             "
+             i18n:translate="users_and_groups_control_panel"
+          >
+            Users and Groups control panel
+          </a>
+        </p>
+      </tal:many>
+    </form>
 
   </metal:block>
 

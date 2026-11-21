@@ -4,7 +4,18 @@ Changelog
 3.0.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- DocentIMS fork: the form is narrower, has a Search box that narrows the
+  user list as you type, and a radio button per user to pick who to
+  impersonate.
+  [DocentIMS]
+
+- DocentIMS fork: while impersonating, a bar on every page names who you are
+  viewing the site as and has a "Return to <admin>" link that signs the admin
+  back in without logging out. Logging out, or 12 hours, ends the way back.
+  [DocentIMS]
+
+- DocentIMS fork: impersonating now needs a POST with a CSRF token.
+  [DocentIMS]
 
 
 3.0.0 (2026-08-25)
