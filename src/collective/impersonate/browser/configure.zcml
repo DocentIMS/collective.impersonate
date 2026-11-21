@@ -11,4 +11,26 @@
       permission="cmf.ManagePortal"
       />
 
+  <!-- Public: whoever is being impersonated has no admin rights. The signed
+       ticket in the __ac_impersonator cookie is what is checked. -->
+  <browser:page
+      name="impersonate-return"
+      for="plone.base.interfaces.siteroot.INavigationRoot"
+      class=".impersonate.ImpersonateReturn"
+      permission="zope.Public"
+      />
+
+  <browser:viewlet
+      name="collective.impersonate.impersonating"
+      manager="plone.app.layout.viewlets.interfaces.IBelowContent"
+      class=".impersonate.ImpersonatingViewlet"
+      template="impersonating_viewlet.pt"
+      permission="zope.Public"
+      />
+
+  <subscriber
+      for="Products.PluggableAuthService.interfaces.events.IUserLoggedOutEvent"
+      handler=".impersonate.forget_impersonator_on_logout"
+      />
+
 </configure>
